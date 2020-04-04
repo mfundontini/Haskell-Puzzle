@@ -7,10 +7,12 @@ module Lib
       anotherFormatter,
       outputGrid,
       isWordInGrid,
-      isWordInReverse
+      isWordInReverse,
+      areMultipleWordsInGrid
     ) where
 
 import Data.List
+import Data.Maybe (catMaybes)
 
 type Grid = [String]
 
@@ -55,9 +57,13 @@ anotherFormatter formater grid = intercalate formater grid
 outputGrid :: IO ()
 outputGrid = putStrLn $ unlines grid
 
-isWordInGrid :: String -> Grid -> Bool
-isWordInGrid _ [] = False
-isWordInGrid word (begin:remainder) = if  word `isInfixOf` begin || ( (reverse word) `isInfixOf` begin) then True else isWordInGrid word remainder
+isWordInGrid :: String -> Grid -> Maybe String
+isWordInGrid _ [] = Nothing
+isWordInGrid word (begin:remainder) = if  word `isInfixOf` begin || ( (reverse word) `isInfixOf` begin) then Just word else isWordInGrid word remainder
 
-isWordInReverse :: String -> Grid -> Bool
+isWordInReverse :: String -> Grid -> Maybe String
 isWordInReverse word grid = isWordInGrid (reverse word) grid
+
+areMultipleWordsInGrid :: Grid -> [String] -> [String]
+areMultipleWordsInGrid [] [] = []
+areMultipleWordsInGrid grid list = catMaybes $ map (\s -> isWordInGrid s grid) list
