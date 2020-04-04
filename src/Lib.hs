@@ -8,7 +8,12 @@ module Lib
       outputGrid,
       isWordInGrid,
       isWordInReverse,
-      areMultipleWordsInGrid
+      areMultipleWordsInGrid,
+      checkForWordsComplete,
+      transformGrid,
+      play,
+      undiagonalized,
+      undiagonalized2
     ) where
 
 import Data.List
@@ -35,7 +40,7 @@ grid = [ "__C________R___"
        , "_________O_____"
        , "________CN_____"
        ]
-
+play = ["MER", "NIX" ]
 languages = [ "BASIC"
             , "COBOL"
             , "CSHARP"
@@ -67,3 +72,29 @@ isWordInReverse word grid = isWordInGrid (reverse word) grid
 areMultipleWordsInGrid :: Grid -> [String] -> [String]
 areMultipleWordsInGrid [] [] = []
 areMultipleWordsInGrid grid list = catMaybes $ map (\s -> isWordInGrid s grid) list
+
+checkForWordsComplete :: [String]
+checkForWordsComplete = (areMultipleWordsInGrid grid languages) ++ (areMultipleWordsInGrid (transpose grid) languages) ++ (areMultipleWordsInGrid (transpose (undiagonalized grid)) languages) ++ (areMultipleWordsInGrid (transpose (undiagonalized2 grid)) languages)
+
+-- Coverts diagonals to vertical
+transformGrid :: Grid -> [Maybe String]
+transformGrid [] = [Nothing]
+transformGrid (begin:remainder) = let
+    offset = (length begin) - 1
+    prefix = offset - ((length remainder) + 1)
+    suffix = length remainder + 1 in
+  (Just ((replicate prefix '_' ) ++ begin ++ (replicate suffix '_' ))) : transformGrid remainder
+
+transformGrid2 :: Grid -> [Maybe String]
+transformGrid2 [] = [Nothing]
+transformGrid2 (begin:remainder) = let
+    offset = (length begin) - 1
+    prefix = offset - ((length remainder) + 1)
+    suffix = length remainder + 1 in
+  (Just ((replicate suffix '_' ) ++ begin ++ (replicate prefix '_' ))) : transformGrid2 remainder
+
+undiagonalized :: Grid -> Grid
+undiagonalized grid = catMaybes $ transformGrid grid
+
+undiagonalized2 :: Grid -> Grid
+undiagonalized2 grid = catMaybes $ transformGrid2 grid
