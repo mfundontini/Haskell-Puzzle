@@ -6,7 +6,8 @@ module Lib
       formatGrid,
       anotherFormatter,
       outputGrid,
-      isWordInGrid
+      isWordInGrid,
+      isWordInReverse
     ) where
 
 import Data.List
@@ -56,4 +57,7 @@ outputGrid = putStrLn $ unlines grid
 
 isWordInGrid :: String -> Grid -> Bool
 isWordInGrid _ [] = False
-isWordInGrid word (begin:remainder) = if  word `isInfixOf` begin then True else isWordInGrid word remainder
+isWordInGrid word (begin:remainder) = if  word `isInfixOf` begin || ( (reverse word) `isInfixOf` begin) then True else isWordInGrid word remainder
+
+isWordInReverse :: String -> Grid -> Bool
+isWordInReverse word grid = isWordInGrid (reverse word) grid
