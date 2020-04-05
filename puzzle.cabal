@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      , Const
   other-modules:
       Paths_puzzle
   hs-source-dirs:
