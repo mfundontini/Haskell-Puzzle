@@ -10,6 +10,7 @@ module Lib
       isWordInReverse,
       areMultipleWordsInGrid,
       checkForWordsComplete,
+      checkForWordsGeneric,
       transformGrid,
       undiagonalized
     ) where
@@ -65,6 +66,16 @@ checkForWordsComplete =
     (areMultipleWordsInGrid (transpose grid) languages) ++
     (areMultipleWordsInGrid (transpose (undiagonalized grid 45)) languages) ++
     (areMultipleWordsInGrid (transpose (undiagonalized grid 135)) languages)
+
+
+-- Generic word searcher
+checkForWordsGeneric :: Grid -> [String] -> [String]
+checkForWordsGeneric [] [] = []
+checkForWordsGeneric someGrid searchWords =
+    (areMultipleWordsInGrid someGrid searchWords) ++
+    (areMultipleWordsInGrid (transpose someGrid) searchWords) ++
+    (areMultipleWordsInGrid (transpose (undiagonalized someGrid 45)) searchWords) ++
+    (areMultipleWordsInGrid (transpose (undiagonalized someGrid 135)) searchWords)
 
 
 -- Coverts 45 and 135 degree diagonals to vertical
