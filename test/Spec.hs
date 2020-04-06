@@ -1,5 +1,6 @@
 import Test.Hspec
 import Lib
+import Game
 
 -- The testing pattern with hspec is:
 -- $ do describe <descibe test> $ do it <what should the function do> $ do <run function with args> `shouldBe` <assertion value>
@@ -43,3 +44,7 @@ main = hspec $ do
     describe "The check for words complete is supposed to transform and transpose the grid to search and return the words" $ do
         it "Should return\n[WORD, WILL, CAR, CALL, NEED, LIST, BALL]" $ do
             (checkForWordsGeneric testGrid testSearchWords) `shouldBe` ["WORD","LIST","CAR","CALL","RUN","WILL","NEED","BALL"]
+
+    describe "The interactive game is loaded fine" $ do
+        it "Should return a of the description for the interactive game" $ do
+            description `shouldBe` "This is an interactive version of the puzzle on Lib.hs"

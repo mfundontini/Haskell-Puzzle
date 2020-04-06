@@ -29,6 +29,7 @@ library
   exposed-modules:
       Lib
       , Const
+      , Game
   other-modules:
       Paths_puzzle
   hs-source-dirs:

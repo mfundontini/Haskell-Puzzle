@@ -1,6 +1,7 @@
 module Main where
 
 import Lib
+import Game
 
 main :: IO ()
 main = do
@@ -10,3 +11,4 @@ main = do
     outputSearchWords
     putStrLn "Words found in the puzzle are:"
     putStrLn $ unlines checkForWordsComplete
+    putStrLn description
