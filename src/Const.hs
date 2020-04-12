@@ -1,6 +1,6 @@
 module Const (
 grid, languages, play,
-Cell, Cordinates, Grid, ParametrizedGrid, Point, Row, Screen
+Cell( Cell ), Cordinates, Grid, ParametrizedGrid, Point, Row, Screen
 ) where
 
 import Data.List
@@ -59,6 +59,7 @@ type Screen = [Row]
 
 -- A data constructor for a cell
 data Cell = Cell (Integer, Integer) Char deriving (Eq, Ord, Show)
+
 
 -- Parametrized Grid type, which can be a Grid of any kind
 type ParametrizedGrid a = [[a]]

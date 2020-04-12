@@ -24,7 +24,7 @@ module Game
 --	[(0,7),(1,7),(2,7),(3,7),(4,7),(5,7),(6,7),(7,7)]
 --]
 
-import Const (grid, Cell, Cordinates, Grid, ParametrizedGrid, Point, Row, Screen)
+import Const (grid, Cell (Cell), Cordinates, Grid, ParametrizedGrid, Point, Row, Screen)
 
 -- Make a string description for this module
 description :: String
@@ -51,11 +51,11 @@ createLimitedScreen side = let
 
 
 -- Create a screen only bound by the size of the `grid`
-createScreen :: Screen
+createScreen :: ParametrizedGrid Cell
 createScreen = let
                 rows = map (repeat) [0..]
                 columns = (repeat) [0..] in
-                    zipWith zip (zipWith zip columns rows) (grid)
+                    zipWith (zipWith Cell) (zipWith zip columns rows) (grid)
 
 
 -- In order to go generic we need to break up the functions so we can understand their type
