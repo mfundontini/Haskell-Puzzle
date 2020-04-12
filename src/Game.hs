@@ -1,10 +1,13 @@
 -- Exports
 module Game
-        ( description,
-          outputInteractiveGrid,
-          createArbitrayGrid,
-          createDeepScreen,
-          createLimitedDeepScreen
+        ( createArbitrayCordinates,
+          createCordinates,
+          createLimitedScreen,
+          createParametrizedGrid,
+          createScreen,
+          createScreenSimplified,
+          description,
+          outputAnyGrid,
         ) where
 
 -- Nested iteration [[(column, row) | column <- [0..7]]| row <- [0..7]] read as for each row, do this with the columns
@@ -21,36 +24,59 @@ module Game
 --	[(0,7),(1,7),(2,7),(3,7),(4,7),(5,7),(6,7),(7,7)]
 --]
 
-import Const (grid)
-
--- An alias for a list of lists of tuples containing (column, row)
-type Screen = [[(Int, Int)]]
--- A screen superimposed with a character for a 3D effect
-type DeepScreen = [[((Int, Int), Char)]]
+import Const (grid, Cell, Cordinates, Grid, ParametrizedGrid, Point, Row, Screen)
 
 -- Make a string description for this module
 description :: String
 description = "This is an interactive version of the puzzle on Lib.hs"
 
--- Output the screen in a pretty manner
-outputInteractiveGrid :: Show a => [a] -> IO ()
-outputInteractiveGrid = putStrLn . unlines . map show
 
--- Create a screen of arbitrary X by X side
-createArbitrayGrid :: Int -> Screen
-createArbitrayGrid 0 = [[(0,0)]]
-createArbitrayGrid side = map (\s -> zip ([0..side - 1]) s) (map (take side . repeat) [i | i <- [0..side - 1]])
+-- Output any Grid constructly in a pretty manner
+outputAnyGrid :: Show a => [a] -> IO ()
+outputAnyGrid = putStrLn . unlines . map show
 
--- Create a deep screen bounded by a square screen size
-createLimitedDeepScreen :: Int -> DeepScreen
-createLimitedDeepScreen side = let
+
+-- Create a square of cordinates X by X side big
+createArbitrayCordinates :: Int -> Cordinates
+createArbitrayCordinates 0 = [[(0,0)]]
+createArbitrayCordinates side = map (\s -> zip ([0..side - 1]) s) (map (take side . repeat) [i | i <- [0..side - 1]])
+
+
+-- Create a screen of X by X size with `grid` superimposed
+createLimitedScreen :: Int -> Screen
+createLimitedScreen side = let
                 rows = map (take side . repeat) [0..]
                 columns = (take side . repeat) [0..] in
                     zipWith zip (zipWith zip columns rows) (grid)
 
--- Create a deep screen only bound by character puzzle
-createDeepScreen :: DeepScreen
-createDeepScreen = let
+
+-- Create a screen only bound by the size of the `grid`
+createScreen :: Screen
+createScreen = let
                 rows = map (repeat) [0..]
                 columns = (repeat) [0..] in
                     zipWith zip (zipWith zip columns rows) (grid)
+
+
+-- In order to go generic we need to break up the functions so we can understand their type
+-- signatures better, create cordinates create a list of [(Int, Int)] which we call cordinates
+-- they are essentially cells but I have kept the old code as a learning curve
+-- createCordinates :: [[(Int, Int)]]
+createCordinates :: Cordinates
+createCordinates = let
+            rows = map repeat [0..]
+            columns = repeat [0..] in
+                zipWith zip columns rows
+
+
+-- createScreenSimplified is a composition of a createCordinates type function and a grid create function
+-- where a grid is a list of strings, note that since coords and someGrid appear on both sides, they can
+-- be removed, but left here for learning
+-- Cordinates -> Grid -> Screen
+createScreenSimplified :: ParametrizedGrid (Int, Int) -> ParametrizedGrid Char -> ParametrizedGrid ((Int, Int), Char)
+createScreenSimplified coords someGrid = zipWith zip coords someGrid
+
+
+-- Generic parametrized grid creation
+createParametrizedGrid :: (a -> b -> (a, b)) -> ParametrizedGrid a -> ParametrizedGrid b -> ParametrizedGrid (a, b)
+createParametrizedGrid = zipWith . zipWith
