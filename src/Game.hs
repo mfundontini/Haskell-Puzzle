@@ -1,6 +1,7 @@
 -- Exports
 module Game
-        ( createArbitrayCordinates,
+        ( convertCell,
+          createArbitrayCordinates,
           createCordinates,
           createLimitedScreen,
           createParametrizedGrid,
@@ -8,6 +9,7 @@ module Game
           createScreenSimplified,
           description,
           outputAnyGrid,
+          prettifyCellGrid
         ) where
 
 -- Nested iteration [[(column, row) | column <- [0..7]]| row <- [0..7]] read as for each row, do this with the columns
@@ -43,11 +45,11 @@ createArbitrayCordinates side = map (\s -> zip ([0..side - 1]) s) (map (take sid
 
 
 -- Create a screen of X by X size with `grid` superimposed
-createLimitedScreen :: Int -> Screen
+createLimitedScreen :: Int -> ParametrizedGrid Cell
 createLimitedScreen side = let
                 rows = map (take side . repeat) [0..]
                 columns = (take side . repeat) [0..] in
-                    zipWith zip (zipWith zip columns rows) (grid)
+                    zipWith (zipWith Cell) (zipWith zip columns rows) (grid)
 
 
 -- Create a screen only bound by the size of the `grid`
@@ -73,10 +75,75 @@ createCordinates = let
 -- where a grid is a list of strings, note that since coords and someGrid appear on both sides, they can
 -- be removed, but left here for learning
 -- Cordinates -> Grid -> Screen
-createScreenSimplified :: ParametrizedGrid (Int, Int) -> ParametrizedGrid Char -> ParametrizedGrid ((Int, Int), Char)
-createScreenSimplified coords someGrid = zipWith zip coords someGrid
+createScreenSimplified :: ParametrizedGrid (Int, Int) -> ParametrizedGrid Char -> ParametrizedGrid Cell
+createScreenSimplified coords someGrid = zipWith (zipWith Cell) coords someGrid
 
 
 -- Generic parametrized grid creation
-createParametrizedGrid :: (a -> b -> (a, b)) -> ParametrizedGrid a -> ParametrizedGrid b -> ParametrizedGrid (a, b)
+createParametrizedGrid :: (a -> b -> c) -> ParametrizedGrid a -> ParametrizedGrid b -> ParametrizedGrid c
 createParametrizedGrid = zipWith . zipWith
+
+-- return Char dimension of a cell
+convertCell :: Cell -> Char
+convertCell (Cell _ character) = character
+
+prettifyCellGrid :: ParametrizedGrid Cell -> Grid
+prettifyCellGrid [[]] = [""]
+prettifyCellGrid cells = map (map (\s -> convertCell s)) cells
+
+
+-- Check if the word is in a normalized grid, then reverse the word and check again
+isWordInCellGrid :: String -> ParametrizedGrid Cell -> Maybe String
+isWordInCellGrid _ [[]] = Nothing
+--isWordInCellGrid word (begin:remainder) = if  word `isInfixOf` begin || ( (reverse word) `isInfixOf` begin) then Just word else isWordInCellGrid word remainder
+isWordInCellGrid word (begin:remainder) = undefined
+
+
+-- Check the reverse of the word is in the CellGrid instead of the grid, this is not used
+isWordInReverse :: String -> ParametrizedGrid Cell -> Maybe String
+isWordInReverse word grid = isWordInCellGrid (reverse word) grid
+
+-- Call isWord in grid multiple times using a list of words
+areMultipleWordsInCellGrid :: ParametrizedGrid Cell -> [String] -> [String]
+areMultipleWordsInCellGrid [[]] [] = []
+areMultipleWordsInCellGrid grid list = catMaybes $ map (\s -> isWordInCellGrid s grid) list
+
+-- Complete function for checking words
+-- TO:DO clean up this inefficient logic
+checkForWordsComplete :: [String]
+checkForWordsComplete =
+    (areMultipleWordsInCellGrid grid languages) ++
+    (areMultipleWordsInCellGrid (transpose grid) languages) ++
+    (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid grid 45)) languages) ++
+    (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid grid 135)) languages)
+
+
+-- Generic word searcher
+checkForWordsGeneric :: ParametrizedGrid Cell -> [String] -> [String]
+checkForWordsGeneric [[]] [] = []
+checkForWordsGeneric someCellGrid searchWords =
+    (areMultipleWordsInCellGrid someCellGrid searchWords) ++
+    (areMultipleWordsInCellGrid (transpose someCellGrid) searchWords) ++
+    (areMultipleWordsInCellGrid (transpose (undiagonalized someCellGrid 45)) searchWords) ++
+    (areMultipleWordsInCellGrid (transpose (undiagonalized someCellGrid 135)) searchWords)
+
+
+-- Coverts 45 and 135 degree diagonals to vertical
+transformCellGrid :: ParametrizedGrid Cell -> Int -> [Maybe String]
+transformCellGrid [] _ = [Nothing]
+transformCellGrid (begin:remainder) degrees = let
+    offset = (length begin) - 1
+    prefix = offset - ((length remainder) + 1)
+    suffix = length remainder + 1 in
+    case degrees of
+        45 -> (Just ((replicate prefix '_' ) ++ begin ++ (replicate suffix '_' ))) : transformCellGrid remainder 45
+        135 -> (Just ((replicate suffix '_' ) ++ begin ++ (replicate prefix '_' ))) : transformCellGrid remainder 135
+
+-- Resolves Maybes in the transformed grid
+undiagonalizedCellGrid :: ParametrizedGrid Cell -> Int -> ParametrizedGrid Cell
+undiagonalizedCellGrid grid degrees = case degrees of
+    45 -> catMaybes $ transformCellGrid grid 45
+    135 -> catMaybes $ transformCellGrid grid 135
+
+
+

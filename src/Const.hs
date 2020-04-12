@@ -57,8 +57,10 @@ type Screen = [Row]
 --    [((0,5),'_'),((1,5),'_'),((2,5),'P'),((3,5),'H'),((4,5),'P'),((5,5),'_'),((6,5),'_')]
 --    ]
 
--- A data constructor for a cell
-data Cell = Cell (Integer, Integer) Char deriving (Eq, Ord, Show)
+
+data Cell = Cell (Int, Int) Char deriving (Eq, Ord, Show)
+-- A data type + data constructor for a cell e.g Cell (2,0) 'C',
+
 
 
 -- Parametrized Grid type, which can be a Grid of any kind
