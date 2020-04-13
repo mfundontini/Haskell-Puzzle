@@ -1,6 +1,8 @@
 -- Exports
 module Game
-        ( convertCell,
+        ( areMultipleWordsInCellGrid,
+          checkForWordsCellGrid,
+          convertCell,
           createArbitrayCordinates,
           createCordinates,
           createLimitedScreen,
@@ -8,8 +10,13 @@ module Game
           createScreen,
           createScreenSimplified,
           description,
+          findWordInCellRow,
+          isWordInCellGrid,
+          isWordInReverse,
           outputAnyGrid,
-          prettifyCellGrid
+          prettifyCellGrid,
+          transformCellGrid,
+          undiagonalizedCellGrid,
         ) where
 
 -- Nested iteration [[(column, row) | column <- [0..7]]| row <- [0..7]] read as for each row, do this with the columns
@@ -26,6 +33,8 @@ module Game
 --	[(0,7),(1,7),(2,7),(3,7),(4,7),(5,7),(6,7),(7,7)]
 --]
 
+import Data.List
+import Data.Maybe (catMaybes)
 import Const (grid, Cell (Cell), Cordinates, Grid, ParametrizedGrid, Point, Row, Screen)
 
 -- Make a string description for this module
@@ -93,43 +102,34 @@ prettifyCellGrid cells = map (map (\s -> convertCell s)) cells
 
 
 -- Check if the word is in a normalized grid, then reverse the word and check again
-isWordInCellGrid :: String -> ParametrizedGrid Cell -> Maybe String
-isWordInCellGrid _ [[]] = Nothing
---isWordInCellGrid word (begin:remainder) = if  word `isInfixOf` begin || ( (reverse word) `isInfixOf` begin) then Just word else isWordInCellGrid word remainder
-isWordInCellGrid word (begin:remainder) = undefined
+isWordInCellGrid :: String -> Grid -> Maybe String
+isWordInCellGrid _ [] = Nothing
+isWordInCellGrid word (begin:remainder) = if  word `isInfixOf` begin || ( (reverse word) `isInfixOf` begin) then Just word else isWordInCellGrid word remainder
 
 
 -- Check the reverse of the word is in the CellGrid instead of the grid, this is not used
-isWordInReverse :: String -> ParametrizedGrid Cell -> Maybe String
+isWordInReverse :: String -> Grid -> Maybe String
 isWordInReverse word grid = isWordInCellGrid (reverse word) grid
 
 -- Call isWord in grid multiple times using a list of words
-areMultipleWordsInCellGrid :: ParametrizedGrid Cell -> [String] -> [String]
+areMultipleWordsInCellGrid :: Grid -> [String] -> [String]
 areMultipleWordsInCellGrid [[]] [] = []
 areMultipleWordsInCellGrid grid list = catMaybes $ map (\s -> isWordInCellGrid s grid) list
 
--- Complete function for checking words
--- TO:DO clean up this inefficient logic
-checkForWordsComplete :: [String]
-checkForWordsComplete =
-    (areMultipleWordsInCellGrid grid languages) ++
-    (areMultipleWordsInCellGrid (transpose grid) languages) ++
-    (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid grid 45)) languages) ++
-    (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid grid 135)) languages)
-
 
 -- Generic word searcher
-checkForWordsGeneric :: ParametrizedGrid Cell -> [String] -> [String]
-checkForWordsGeneric [[]] [] = []
-checkForWordsGeneric someCellGrid searchWords =
-    (areMultipleWordsInCellGrid someCellGrid searchWords) ++
-    (areMultipleWordsInCellGrid (transpose someCellGrid) searchWords) ++
-    (areMultipleWordsInCellGrid (transpose (undiagonalized someCellGrid 45)) searchWords) ++
-    (areMultipleWordsInCellGrid (transpose (undiagonalized someCellGrid 135)) searchWords)
+checkForWordsCellGrid :: ParametrizedGrid Cell -> [String] -> [String]
+checkForWordsCellGrid [[]] [] = []
+checkForWordsCellGrid someCellGrid searchWords = let
+                                              normalizedGrid = (prettifyCellGrid someCellGrid) in
+                                                (areMultipleWordsInCellGrid normalizedGrid searchWords) ++
+                                                (areMultipleWordsInCellGrid (transpose normalizedGrid) searchWords) ++
+                                                (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid normalizedGrid 45)) searchWords) ++
+                                                (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid normalizedGrid 135)) searchWords)
 
 
 -- Coverts 45 and 135 degree diagonals to vertical
-transformCellGrid :: ParametrizedGrid Cell -> Int -> [Maybe String]
+transformCellGrid :: Grid -> Int -> [Maybe String]
 transformCellGrid [] _ = [Nothing]
 transformCellGrid (begin:remainder) degrees = let
     offset = (length begin) - 1
@@ -140,10 +140,37 @@ transformCellGrid (begin:remainder) degrees = let
         135 -> (Just ((replicate suffix '_' ) ++ begin ++ (replicate prefix '_' ))) : transformCellGrid remainder 135
 
 -- Resolves Maybes in the transformed grid
-undiagonalizedCellGrid :: ParametrizedGrid Cell -> Int -> ParametrizedGrid Cell
+undiagonalizedCellGrid :: Grid -> Int -> Grid
 undiagonalizedCellGrid grid degrees = case degrees of
     45 -> catMaybes $ transformCellGrid grid 45
     135 -> catMaybes $ transformCellGrid grid 135
+
+findWordInCellRow :: [Cell] -> [Char]-> [Cell] -> Maybe [Cell]
+findWordInCellRow acm (currentChar:nextChars) (currentCell:nextCells) |
+                                                    currentChar == (convertCell currentCell) = findWordInCellRow (acm ++ (currentCell:[])) nextChars nextCells |
+                                                    currentChar /= (convertCell currentCell) = findWordInCellRow  acm (currentChar:nextChars) nextCells
+findWordInCellRow acm [] _ = Just acm
+findWordInCellRow _ _ _ = Nothing
+
+findWordInCellGrid :: ParametrizedGrid Cell -> [Char] -> [[Cell]]
+findWordInCellGrid [[]] [] = []
+findWordInCellGrid cellGrid word = catMaybes $ map (\s -> (findWordInCellRow [] word s) ) cellGrid
+
+
+findMultipleWordsInCellGrid :: ParametrizedGrid Cell -> [String] -> [[Cell]]
+findMultipleWordsInCellGrid [[]] [] = []
+findMultipleWordsInCellGrid cellGrid searchWords = map (\s -> findWordInCellGrid cellGrid s) searchWords
+
+
+-- Generic word searcher
+--checkForWordsCellGrid :: ParametrizedGrid Cell -> [String] -> [String]
+--checkForWordsCellGrid [] [] = []
+--checkForWordsCellGrid someCellGrid searchWords = let
+--                                              normalizedGrid = (prettifyCellGrid someCellGrid) in
+--                                                (areMultipleWordsInCellGrid normalizedGrid searchWords) ++
+--                                                (areMultipleWordsInCellGrid (transpose normalizedGrid) searchWords) ++
+--                                                (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid normalizedGrid 45)) searchWords) ++
+--                                                (areMultipleWordsInCellGrid (transpose (undiagonalizedCellGrid normalizedGrid 135)) searchWords)
 
 
 
